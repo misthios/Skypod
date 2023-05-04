@@ -71,6 +71,7 @@ func (c *Client) Request(ctx context.Context, method string,endpoint string,body
 	for key, val := range headers {
 		for _, v := range val {req.Header.Add(key, v)}
 	}
+        req.Header.Set("User-Agent", "Skypod-agent/1.0")
 
         response, err := c.Client.Do(req)
         if err != nil {return nil, err}
