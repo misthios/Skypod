@@ -37,7 +37,7 @@ func NewClient(uri string) (context.Context, error){
         c := &Client{URI: parurl, Client: hclient}
         ctx := context.WithValue(context.Background(),"Client",c)
 
-	err = CheckConnection(ctx)
+	ctx, err = CheckConnection(ctx)
 	if err != nil {return nil,err}
 
         return ctx,nil
@@ -61,7 +61,13 @@ returns the response / error
 */
 func (c *Client) Request(ctx context.Context, method string,endpoint string,body io.Reader, headers http.Header,params url.Values) (*http.Response,error) {
 
-        uri :=  "http://d/libpod"+endpoint 
+	var uri string
+
+        if v, ok := ctx.Value("Version").(string); ok {
+        	uri = "http://d/v" + v + "/libpod"+endpoint
+	} else {
+        	uri = "http://d/libpod"+endpoint
+	}
 
         req, err := http.NewRequestWithContext(ctx, method, uri, body)
         if err != nil {return nil, err}
@@ -80,21 +86,28 @@ func (c *Client) Request(ctx context.Context, method string,endpoint string,body
 
 /*
 Checks if the client is able to reach the api
+If successfull it will set the api version in the current context
 return error if not
 */
-func CheckConnection(ctx context.Context) error {
+func CheckConnection(ctx context.Context) (context.Context,error) {
         client, err := GetClient(ctx)
-        if err != nil {return err}
+        if err != nil {return nil,err}
 
         response,err := client.Request(ctx,http.MethodGet,"/_ping",nil,nil,nil)
-        if err != nil {return err}
+        if err != nil {return nil,err}
 
         defer response.Body.Close()
 	
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to check if the api is ready: received wrong status code")
+		return nil,fmt.Errorf("failed to check if the api is ready: received wrong status code")
 	}
-        return nil
+
+	//set the api-version 
+	v := response.Header.Get("Libpod-API-Version")
+	if v == "" { return nil,fmt.Errorf("API did not return the version")}
+
+	ctx = context.WithValue(ctx,"Version",v)
+        return ctx,nil
 }
 
 
