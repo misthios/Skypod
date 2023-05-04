@@ -36,6 +36,10 @@ func NewClient(uri string) (context.Context, error){
         }
         c := &Client{URI: parurl, Client: hclient}
         ctx := context.WithValue(context.Background(),"Client",c)
+
+	err = CheckConnection(ctx)
+	if err != nil {return nil,err}
+
         return ctx,nil
 }
 
@@ -72,4 +76,25 @@ func (c *Client) Request(ctx context.Context, method string,endpoint string,body
         if err != nil {return nil, err}
         return response,nil
 }
+
+/*
+Checks if the client is able to reach the api
+return error if not
+*/
+func CheckConnection(ctx context.Context) error {
+        client, err := GetClient(ctx)
+        if err != nil {return err}
+
+        response,err := client.Request(ctx,http.MethodGet,"/_ping",nil,nil,nil)
+        if err != nil {return err}
+
+        defer response.Body.Close()
+	
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to check if the api is ready: received wrong status code")
+	}
+        return nil
+}
+
+
 
