@@ -3,6 +3,7 @@ package skypod
 import (
         "context"
         "net/url"
+	"io"
         "net"
         "net/http"
         "fmt"
@@ -48,3 +49,27 @@ func GetClient(ctx context.Context) (*Client,error){
         }
         return nil,fmt.Errorf("Client is not present in context")
 }
+
+/*
+Make a request to the api
+Caller is required to close the request body
+returns the response / error
+*/
+func (c *Client) Request(ctx context.Context, method string,endpoint string,body io.Reader, headers http.Header,params url.Values) (*http.Response,error) {
+
+        uri :=  "http://d/libpod"+endpoint 
+
+        req, err := http.NewRequestWithContext(ctx, method, uri, body)
+        if err != nil {return nil, err}
+
+	if len(params) > 0 {req.URL.RawQuery = params.Encode() }
+
+	for key, val := range headers {
+		for _, v := range val {req.Header.Add(key, v)}
+	}
+
+        response, err := c.Client.Do(req)
+        if err != nil {return nil, err}
+        return response,nil
+}
+
