@@ -6,6 +6,8 @@ The design is skypod is based on the design of podmans own bindings.
 
 ## Current features
 * Event monitoring
+* Minimal spec creation
+* Container creation
 
 
 ## Limitations
