@@ -9,6 +9,12 @@ import (
         "fmt"
 )
 
+type ApiError struct {
+	Cause string
+	Message string
+	Response int
+}
+
 type Client struct {
         URI *url.URL
         Client *http.Client
