@@ -10,10 +10,10 @@ import (
 
 
 /*
-shared code for starting/stopping containers
+shared code for changing states
 returns error
 */
-func poweraction(ctx context.Context, name string,state string) error{
+func changestate(ctx context.Context, name string,state string) error{
   client, err := skypod.GetClient(ctx)
   if err !=nil {return err}
 
@@ -25,8 +25,7 @@ func poweraction(ctx context.Context, name string,state string) error{
   case 204:
     return nil
   case 304:
-    if state == "start" {return fmt.Errorf("Container already started")}
-    if state == "stop" {return fmt.Errorf("Container already stopped")}
+    return fmt.Errorf("Container is already in state %s",state)
   case 404:
     return fmt.Errorf("Container not found")
   case 500:
@@ -36,26 +35,28 @@ func poweraction(ctx context.Context, name string,state string) error{
     cause,err := skypod.HandleApiError(body)
     if err !=nil {return err}
 
-		return fmt.Errorf("Failed to start container: %s",cause)
+		return fmt.Errorf("Failed to change container state: %s",cause)
   }
   return nil 
  }
 
- /*
- Start a container
- returns error
- */
  func Start(ctx context.Context,name string) error{
-   return poweraction(ctx,name,"start")
+   return changestate(ctx,name,"start")
  }
 
- /*
- Stop a container
- returns error
- */
  func Stop(ctx context.Context,name string) error{
-   return poweraction(ctx,name,"stop")
+   return changestate(ctx,name,"stop")
  }
+
+ func Pause(ctx context.Context,name string) error{
+   return changestate(ctx,name,"pause")
+ }
+ func Unpause(ctx context.Context,name string) error{
+
+   return changestate(ctx,name,"unpause")
+ }
+
+
 
 
 
