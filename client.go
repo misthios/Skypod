@@ -2,6 +2,7 @@ package skypod
 
 import (
         "context"
+        "encoding/json"
         "net/url"
       	"io"
         "net"
@@ -120,6 +121,19 @@ func CheckConnection(ctx context.Context) (context.Context,error) {
 
 	ctx = context.WithValue(ctx,versionKey,v)
         return ctx,nil
+}
+
+/*
+Parses the body into a APIError type
+Returns the cause for the error or a new error :)
+other fields are not used at this moment
+*/
+func HandleApiError(body []byte) (string,error){
+  var apierror ApiError
+  err := json.Unmarshal(body,&apierror)
+		if err !=nil {return "",err}
+
+    return apierror.Cause,nil
 }
 
 

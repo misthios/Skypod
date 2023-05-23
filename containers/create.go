@@ -2,9 +2,8 @@ package containers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"github.com/misthios/skypod"
@@ -25,13 +24,13 @@ func Create(ctx context.Context,spec string) error{
 	if err !=nil {return err}
 
 	if response.StatusCode != 201 {
-		body, err := io.ReadAll(response.Body)
-		if err !=nil {return err}
+    body,err := ioutil.ReadAll(response.Body)
+    if err !=nil {return err}
 
-		var apierror skypod.ApiError
-		err = json.Unmarshal(body,&apierror)
-		if err !=nil {return err}
-		return fmt.Errorf("Failed to create container: %s",apierror.Cause)
+    cause,err := skypod.HandleApiError(body)
+    if err !=nil {return err}
+
+		return fmt.Errorf("Failed to create container: %s",cause)
 	}
 	return nil
 }
