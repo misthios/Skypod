@@ -3,7 +3,7 @@ package skypod
 import (
         "context"
         "net/url"
-	"io"
+      	"io"
         "net"
         "net/http"
         "fmt"
@@ -19,6 +19,12 @@ type Client struct {
         URI *url.URL
         Client *http.Client
 }
+
+type contextKey string
+const (
+  clientKey = contextKey("client")
+  versionKey = contextKey("version")
+)
 
 /*
 Create a new api client for the unix socket
@@ -41,7 +47,7 @@ func NewClient(uri string) (context.Context, error){
                 },
         }
         c := &Client{URI: parurl, Client: hclient}
-        ctx := context.WithValue(context.Background(),"Client",c)
+        ctx := context.WithValue(context.Background(),clientKey,c)
 
 	ctx, err = CheckConnection(ctx)
 	if err != nil {return nil,err}
@@ -54,7 +60,7 @@ Check if the context contains a client
 return the client / error
 */
 func GetClient(ctx context.Context) (*Client,error){
-        if c, ok := ctx.Value("Client").(*Client); ok {
+        if c, ok := ctx.Value(clientKey).(*Client); ok {
                 return c, nil
         }
         return nil,fmt.Errorf("Client is not present in context")
@@ -69,7 +75,7 @@ func (c *Client) Request(ctx context.Context, method string,endpoint string,body
 
 	var uri string
 
-        if v, ok := ctx.Value("Version").(string); ok {
+        if v, ok := ctx.Value(versionKey).(string); ok {
         	uri = "http://d/v" + v + "/libpod"+endpoint
 	} else {
         	uri = "http://d/libpod"+endpoint
@@ -112,7 +118,7 @@ func CheckConnection(ctx context.Context) (context.Context,error) {
 	v := response.Header.Get("Libpod-API-Version")
 	if v == "" { return nil,fmt.Errorf("API did not return the version")}
 
-	ctx = context.WithValue(ctx,"Version",v)
+	ctx = context.WithValue(ctx,versionKey,v)
         return ctx,nil
 }
 
