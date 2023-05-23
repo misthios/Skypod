@@ -10,14 +10,14 @@ import (
 
 
 /*
-Start the container
+shared code for starting/stopping containers
 returns error
 */
-func Start(ctx context.Context, name string) error{
+func poweraction(ctx context.Context, name string,state string) error{
   client, err := skypod.GetClient(ctx)
   if err !=nil {return err}
 
-  response, err := client.Request(ctx,http.MethodPost,"/containers/" + name+ "/start",nil,nil,nil)
+  response, err := client.Request(ctx,http.MethodPost,"/containers/" + name+ "/" + state,nil,nil,nil)
   defer response.Body.Close()
   if err !=nil {return err}
 
@@ -25,7 +25,8 @@ func Start(ctx context.Context, name string) error{
   case 204:
     return nil
   case 304:
-    return fmt.Errorf("Container already started")
+    if state == "start" {return fmt.Errorf("Container already started")}
+    if state == "stop" {return fmt.Errorf("Container already stopped")}
   case 404:
     return fmt.Errorf("Container not found")
   case 500:
@@ -39,4 +40,23 @@ func Start(ctx context.Context, name string) error{
   }
   return nil 
  }
+
+ /*
+ Start a container
+ returns error
+ */
+ func Start(ctx context.Context,name string) error{
+   return poweraction(ctx,name,"start")
+ }
+
+ /*
+ Stop a container
+ returns error
+ */
+ func Stop(ctx context.Context,name string) error{
+   return poweraction(ctx,name,"stop")
+ }
+
+
+
 
